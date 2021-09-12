@@ -5,7 +5,7 @@
     name:
      - boto3
      - boto
-  become: yes
+  # become: yes
   tags:
     - prerequisites
 
@@ -94,7 +94,7 @@
     - AWS
 
 #Look up the AMI id to use based on a search
-- name: Look up Debian Jessie AMI
+- name: Look up Debian AMI image
   ec2_ami_facts:
     owners: "{{ base_image.debian_aws_account_id }}"
     region: "{{ ec2_region }}"
@@ -109,13 +109,17 @@
     - aws
     - AWS
 
+- name: Select latest Debian AMI
+  set_fact:
+    debian_ami_image: '{{ debian_ami.images | sort(attribute="creation_date", reverse=True) | first }}'
+
 #---- Launch EC2 instance ----
 - name: Launch an EC2 instance
   ec2:
     key_name: "{{ key_pair_name }}"
     assign_public_ip: True
     vpc_subnet_id: "{{ vpc_subnets.subnets[0].subnet_id }}"
-    image: "{{ debian_ami.images[0].image_id }}"
+    image: "{{ debian_ami_image.image_id }}"
     instance_type: "{{ instance_type }}"
     region: "{{ ec2_region }}"
     group_id: "{{ security_group.group_id  }}"
